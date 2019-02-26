@@ -29,6 +29,7 @@ class Draw extends Component {
         this.ctx.strokeStyle = "yellow";
          let img = this.props.Image;
          
+         // Once it's loaded the image, it will be drawn on the canvas
          img.onload = ()=>{
          console.log(img)
          this.ctx.drawImage(img, 0, 0);
@@ -36,6 +37,7 @@ class Draw extends Component {
          }
       }
 
+    //////////////// Touch Controls
     drawInit(ev) {
         let d = translate(ev)
         this.setState({
@@ -43,9 +45,13 @@ class Draw extends Component {
             Drawing: true
         })
         
+        // Begin path and close path are required to alert the canvas to where individual paths start and end.
+        this.ctx.beginPath()
+        
         //Moves the "Paintbrush" to the current location without drawing a line to get there.
         this.ctx.moveTo(d.x, d.y)
     }
+    
     drawMove(ev) {
         if(this.state.Drawing){
         let current = this.state.CurrentLine;
@@ -55,9 +61,11 @@ class Draw extends Component {
             CurrentLine: current
         })
         this.ctx.lineTo(d.x, d.y);
+            console.log(d)
         this.ctx.stroke()
         }
     }
+    
     drawEnd(ev) {
         let current = this.state.CurrentLine;
         let past = this.state.PastLines;
@@ -68,8 +76,66 @@ class Draw extends Component {
             Drawing: false
         })
         
+        this.ctx.closePath()
     }
-
+    /////////////// Undo/Redo
+    // Redo and undo simply remove or add the last line from the "pastlines" array before deleting the picture on screen and re-making it from the saved instructions.
+    Back (ev){
+        if(this.state.PastLines.length >= 1)
+        { let img = this.props.Image;
+        let state = this.state
+        state.Deleted.push(state.PastLines.pop());
+        this.setState(state);
+        this.ctx.clearRect(0,0, window.innerWidth, window.innerHeight);
+        this.ctx.drawImage(img, 0, 0);
+        
+        for(let i = 0; i < state.PastLines.length; i++){
+            let first = true;
+            state.PastLines[i].forEach((Drawline)=>{
+                if(first){
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(Drawline.x, Drawline.y)
+                    first = false;
+                } else {
+        this.ctx.lineTo(Drawline.x, Drawline.y);
+        this.ctx.stroke()
+                }
+                
+            })
+            this.ctx.closePath();
+        }}
+        
+    }
+    Redo (ev){
+        if(this.state.Deleted.length >= 1){ let img = this.props.Image;
+        let state = this.state
+        state.PastLines.push(state.Deleted.pop());
+        this.setState(state);
+        this.ctx.clearRect(0,0, window.innerWidth, window.innerHeight);
+        this.ctx.drawImage(img, 0, 0);
+        
+        for(let i = 0; i < state.PastLines.length; i++){
+            let first = true;
+            state.PastLines[i].forEach((Drawline)=>{
+                if(first){
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(Drawline.x, Drawline.y)
+                    first = false;
+                } else {
+        this.ctx.lineTo(Drawline.x, Drawline.y);
+        this.ctx.stroke()
+                }
+                
+            })
+            this.ctx.closePath();
+        }}
+        
+        
+    }
+    K(ev){
+        this.props.PicDone(this.refs.Canvas);
+    }
+    ////////////////////////
     render() {
         return ( 
         <div>
@@ -84,8 +150,14 @@ class Draw extends Component {
             onTouchEnd = {this.drawEnd.bind(this)}
             onMouseUp = {this.drawEnd.bind(this)}/>
                 
-                <button className="Back"> &lt; </button>
-                <button className="UnBack"> &gt; </button>
+                
+                
+        <div className="BottomBanner">
+            
+                <button className="Back" onClick={this.Back.bind(this)}> &lt; </button>
+                <button className="Done" onClick={this.K.bind(this)}> Done </button>
+                <button className="Redo" onClick={this.Redo.bind(this)}> &gt; </button>
+            </div>
         </div>
         );
     }

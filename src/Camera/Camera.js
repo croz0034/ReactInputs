@@ -4,20 +4,14 @@
 import React, { Component } from 'react';
 
 class Camera extends Component {
-    
-  constructor(props){
-    super(props)
-    this.state = {
-      file: null
-    }
-  }
-    
 
   render() {
     return (
       <div>
+        <label htmlFor="Shutter"><img src={require('./Camera.png')} className="Shutter"/></label>
+        
         <input type="file" onChange={this.props.TakePic}
-        accept="image/*" className="Shutter" capture="camera" />
+        accept="image/*" id="Shutter" className="Hidden" capture="camera" /> 
         
       </div>
     );
